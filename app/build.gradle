@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId "com.ninjaturtles.taxo"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -62,7 +62,7 @@ dependencies {
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:$mapbox_navigation_version"
     implementation "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core_version"
 
-    implementation files('libs/mapbox-vision_0.13.0.aar', 'libs/mapbox-vision-ar_0.13.0.aar', 'libs/mapbox-vision-safety_0.13.0.aar')
+    implementation files('libs/mapbox-vision_0.13.0.aar', 'libs/mapbox-vision-ar_0.13.0.aar', 'libs/mapbox-vision-safety_0.13.0.aar', )
     implementation "com.google.android.gms:play-services-location:$location_version"
 
     testImplementation 'junit:junit:4.+'

@@ -9,7 +9,7 @@
         android:id="@+id/ARFragment"
         android:name="com.ninjaturtles.usetogether.ar_helper.ARActivity"
         android:label="fragment_a_r"
-        tools:layout="@layout/fragment_a_r" >
+        tools:layout="@layout/activity_a_r" >
         <argument
             android:name="originLongitude"
             app:argType="float"

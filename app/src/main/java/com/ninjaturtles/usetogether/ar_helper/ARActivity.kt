@@ -1,7 +1,6 @@
 package com.ninjaturtles.usetogether.ar_helper
 
 import android.Manifest
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.IntentSender
@@ -14,14 +13,9 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.Base64
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -57,7 +51,7 @@ import com.mapbox.vision.utils.VisionLogger
 import com.ninjaturtles.usetogether.BuildConfig
 import com.ninjaturtles.usetogether.R
 import com.ninjaturtles.usetogether.UseTogetherApp
-import kotlinx.android.synthetic.main.fragment_a_r.*
+import kotlinx.android.synthetic.main.activity_a_r.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -66,11 +60,12 @@ import java.nio.ByteBuffer
 
 class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener {
     private val locationEngine: LocationEngine by lazy {
-        LocationEngineProvider.getBestLocationEngine(applicationContext)
+        LocationEngineProvider.getBestLocationEngine(this)
     }
-    private val plateRecogniserService: PlateRecogniserService =
+    private val plateRecogniserService: PlateRecogniserService by lazy {
         UseTogetherApp.plateRecogniserService
-    private val taxiPoint = Point.fromLngLat(1.0, 2.0)
+    }
+    private lateinit var taxiPoint: Point
     private var needDetectCar = false
     private lateinit var mapboxNavigation: MapboxNavigation
     private lateinit var routeFetcher: RouteFetcher
@@ -96,14 +91,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
     private lateinit var origin: Point
-    private lateinit var destination: Point
     private lateinit var plate: String
 
     private val settingsClient: SettingsClient by lazy {
-        LocationServices.getSettingsClient(requireContext())
+        LocationServices.getSettingsClient(this)
     }
 
-    private val locaitonRequest: LocationRequest by lazy {
+    private val locationRequest: LocationRequest by lazy {
         LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = 10_000L
@@ -113,35 +107,24 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private val locationSettingsRequest: LocationSettingsRequest by lazy {
         LocationSettingsRequest.Builder()
-            .addLocationRequest(locaitonRequest)
+            .addLocationRequest(locationRequest)
             .build()
     }
     private lateinit var paint: Paint
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        origin = Point.fromLngLat(
-            intent.getFloatExtra("originLongitude", 0.0f).toDouble(),
-            intent.getFloatExtra("originLatitude", 0.0f).toDouble(),
+        setContentView(R.layout.activity_a_r)
+        taxiPoint = Point.fromLngLat(
+            intent.getFloatExtra("originLongitude", 30.49912f).toDouble(),
+            intent.getFloatExtra("originLatitude", 50.4716497f).toDouble()
         )
-        destination = Point.fromLngLat(
-            requireArguments().getFloat("destinationLongitude").toDouble(),
-            requireArguments().getFloat("destinationLatitude").toDouble()
-        )
-        plate = requireArguments().getString("plate", "")
+        plate = intent.getStringExtra("plate") ?: "AI2064BK"
         preparePaint()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_a_r, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onStart() {
+        super.onStart()
         checkLocationPermission()
         checkCameraPermission()
     }
@@ -208,9 +191,9 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                                     drawSingleDetection(canvas, detection)
                                                 }
                                             }
-                                            requireActivity().runOnUiThread(
+                                            runOnUiThread(
                                                 Runnable {
-                                                    detections_view.setImageBitmap(frameBitmap)
+                                                    //detections_view.setImageBitmap(frameBitmap)
                                                 }
                                             )
                                         }
@@ -238,12 +221,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         val callback = object : LocationEngineCallback<LocationEngineResult> {
             override fun onSuccess(result: LocationEngineResult?) {
                 result?.lastLocation?.let { location ->
+                    origin = Point.fromLngLat(
+                        location.longitude,
+                        location.latitude
+                    )
                     val distanceToTaxi = TurfMeasurement.distance(
                         taxiPoint,
-                        Point.fromLngLat(
-                            location.longitude,
-                            location.latitude
-                        ),
+                        origin,
                         TurfConstants.UNIT_METERS
                     )
                     needDetectCar = distanceToTaxi < CAR_RECOGNITION_AREA_RADIUS
@@ -254,8 +238,11 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
             }
         }
+        val locationEngineRequest = LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
+            .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+            .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build()
         locationEngine.requestLocationUpdates(
-            locationRequest,
+            locationEngineRequest,
             callback,
             Looper.getMainLooper()
         )
@@ -269,11 +256,11 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private fun startNavigation() {
         mapboxNavigation = MapboxNavigation(
-            requireContext(),
+            this,
             BuildConfig.MAPBOX_DOWNLOADS_TOKEN,
             MapboxNavigationOptions.builder().build()
         )
-        routeFetcher = RouteFetcher(requireContext(), BuildConfig.MAPBOX_DOWNLOADS_TOKEN)
+        routeFetcher = RouteFetcher(this, BuildConfig.MAPBOX_DOWNLOADS_TOKEN)
         routeFetcher.addRouteListener(object : RouteListener {
             override fun onResponseReceived(
                 response: DirectionsResponse?,
@@ -282,15 +269,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                 mapboxNavigation.stopNavigation()
                 if (response?.routes()?.isEmpty() == true) {
                     Toast.makeText(
-                        requireContext(),
+                        this@ARActivity,
                         "Can not calculate the route requested",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
                     mapboxNavigation.startNavigation(response!!.routes()[0])
                     val route = response.routes()[0]
-
-// Set route progress.
                     VisionArManager.setRoute(
                         Route(
                             route.getRoutePoints(),
@@ -332,10 +317,10 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     private fun initDirectionsRoute() {
-        NavigationRoute.builder(requireContext())
+        NavigationRoute.builder(this)
             .accessToken(BuildConfig.MAPBOX_DOWNLOADS_TOKEN)
             .origin(origin)
-            .destination(destination)
+            .destination(taxiPoint)
             .build()
             .getRoute(object : Callback<DirectionsResponse> {
                 override fun onResponse(
@@ -435,7 +420,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private fun checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(
-                requireContext(),
+                this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
@@ -451,7 +436,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private fun checkCameraPermission() {
         if(ContextCompat.checkSelfPermission(
-                requireContext(),
+                this,
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED) {
                     startVisionManager()
@@ -462,17 +447,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     private fun drawSingleDetection(canvas: Canvas, detection: Detection) {
-// first thing we get coordinates of bounding box
         val relativeBbox = detection.boundingBox
-        // we need to transform them from relative (range [0, 1]) to absolute in terms of canvas(frame) size
-// we do not care about screen resolution at all - we will use cropCenter mode
         val absoluteBbox = RectF(
             relativeBbox.left * canvas.getWidth(),
             relativeBbox.top * canvas.getHeight(),
             relativeBbox.right * canvas.getWidth(),
             relativeBbox.bottom * canvas.getHeight()
         )
-        // we want to draw circle bounds, we need radius and center for that
         val radius = Math.sqrt(
             Math.pow((absoluteBbox.centerX() - absoluteBbox.left).toDouble(), 2.0) +
                     Math.pow((absoluteBbox.centerY() - absoluteBbox.top).toDouble(), 2.0)
@@ -494,7 +475,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                     when ((exception as ApiException).statusCode) {
                         LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> try {
                             (exception as ResolvableApiException).startResolutionForResult(
-                                requireActivity(),
+                                this,
                                 1
                             )
                         } catch (sie: IntentSender.SendIntentException) {
@@ -507,7 +488,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private fun convertImageToBitmap(originalImage: Image): Bitmap {
 
-        val bitmap = BitmapFactory.decodeResource(requireContext().getResources(), R.drawable.transparent_drawable)
+        val bitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.transparent_drawable)
         val buffer: ByteBuffer = ByteBuffer.allocateDirect(originalImage.sizeInBytes())
         originalImage.copyPixels(buffer)
         buffer.rewind()
@@ -523,14 +504,14 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     private fun showLocationPermissionDeniedDialog() {
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(this)
             .setMessage(resources.getString(R.string.location_permission_denied))
             .setCancelable(true)
             .show()
     }
 
     private fun showCameraPermissionDeniedDialog() {
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(this)
             .setMessage(R.string.camera_permission_denied)
             .setCancelable(true)
             .show()
@@ -540,5 +521,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         const val CAR_RECOGNITION_AREA_RADIUS = 30.0
         private const val ACCESS_LOCATION_PERMISSION = 1
         private const val CAMERA_PERMISSION = 2
+        private const val DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L
+        private const val DEFAULT_MAX_WAIT_TIME = 5000L
     }
 }
