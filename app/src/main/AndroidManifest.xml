@@ -3,47 +3,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.ninjaturtles.usetogether">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
+        android:name=".UseTogetherApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".UseTogetherApp"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.UseTogether">
+        <meta-data
+            android:name="com.google.android.actions"
+            android:resource="@xml/actions" />
+
         <activity android:name=".MainActivity">
-            <intent-filter>
+            <intent-filter
+                android:autoVerify="true"
+                >
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="com.google.android.gms.actions.SEARCH_ACTION" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
             <intent-filter
                 android:autoVerify="true"
                 tools:targetApi="m">
-
                 <action android:name="android.intent.action.VIEW" />
-
+                <action android:name="actions.intent.CREATE_TAXI_RESERVATION" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="fit-actions.firebaseapp.com"
+                    android:host="fit-actions.taxo.com"
                     android:scheme="https" />
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".TaxoService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
+
         <meta-data
-            android:name="com.google.android.actions"
-            android:resource="@xml/actions" />
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAMnja8KY2kKhOOVxYe5qJ9nxvvM45pGRQ" />
     </application>
-
-
 
 </manifest>

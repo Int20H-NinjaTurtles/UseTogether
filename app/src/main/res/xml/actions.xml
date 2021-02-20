@@ -1,16 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version ="1.0" encoding ="utf-8"?><!--  Learn More about how to use App Actions: https://developer.android.com/guide/actions/index.html -->
 <actions>
-    <action intentName="actions.intent.REQUEST_RIDE">
-        <fulfillment urlTemplate="https://fit-actions.firebaseapp.com/start{?fromPoint}{?toPoint}{?carType}">
+    <action intentName="actions.intent.CREATE_TAXI_RESERVATION">
+        <fulfillment
+            fulfillmentMode="actions.fulfillment.DEEPLINK"
+            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress,pickupLocationGeolatitude,dropoffLocationGeolatitude,pickupLocationGeolongitude,dropoffLocationGeolongitude}">
+            <parameter-mapping urlParameter="pickupLocationName" intentParameter="taxiReservation.pickupLocation.name" />
+            <parameter-mapping urlParameter="dropoffLocationName" intentParameter="taxiReservation.dropoffLocation.name" />
+            <parameter-mapping urlParameter="pickupLocationAddress" intentParameter="taxiReservation.pickupLocation.address" />
+            <parameter-mapping urlParameter="dropoffLocationAddress" intentParameter="taxiReservation.dropoffLocation.address" />
+            <parameter-mapping urlParameter="pickupLocationGeolatitude" intentParameter="taxiReservation.pickupLocation.geo.latitude" />
+            <parameter-mapping urlParameter="dropoffLocationGeolatitude" intentParameter="taxiReservation.dropoffLocation.geo.latitude" />
+            <parameter-mapping urlParameter="pickupLocationGeolongitude" intentParameter="taxiReservation.pickupLocation.geo.longitude" />
+            <parameter-mapping urlParameter="dropoffLocationGeolongitude" intentParameter="taxiReservation.dropoffLocation.geo.longitude" />
             <parameter-mapping
-                intentParameter="route.from"
-                urlParameter="fromPoint" />
-            <parameter-mapping
-                intentParameter="route.to"
-                urlParameter="toPoint" />
-            <parameter-mapping
-                intentParameter="car.type"
-                urlParameter="carType" />
+                urlParameter="category"
+                intentParameter="taxiReservation.category"
+                />
         </fulfillment>
+<!--        <fulfillment urlTemplate="https://fit-actions.taxo.com/ride"-->
+<!--            fulfillmentMode="actions.fulfillment.DEEPLINK"-->
+<!--            />-->
+        <parameter name="taxiReservation.category">
+            <entity-set-reference entitySetId="categoryEntitySet"/>
+        </parameter>
     </action>
+
+    <entity-set entitySetId="categoryEntitySet">
+        <!-- Provide an identifier per entity -->
+        <entity identifier="standard" name="standart"/>
+        <entity identifier="business" name="prime"/>
+        <entity identifier="pet" name="pet"/>
+    </entity-set>
 </actions>

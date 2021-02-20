@@ -1,9 +1,8 @@
 <resources>
-    <string name="app_name">UseTogether</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="name">name</string>
     <string name="password">password</string>
     <string name="signin">sign in</string>
     <string name="signup">sign up</string>
+    <string name="app_name">Taxo</string>
 </resources>
