@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <actions>
     <action intentName="actions.intent.REQUEST_RIDE">
-        <fulfillment urlTemplate="https://fit-actions.firebaseapp.com/start{?fromPoint}{?toPoint}{?carType}">
+        <fulfillment urlTemplate="https://fit-actions.firebaseapp.com/ride{?fromPoint}{?toPoint}{?carType}">
             <parameter-mapping
                 intentParameter="route.from"
                 urlParameter="fromPoint" />
