@@ -3,35 +3,27 @@
     <action intentName="actions.intent.CREATE_TAXI_RESERVATION">
         <fulfillment
             fulfillmentMode="actions.fulfillment.DEEPLINK"
-            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress,pickupLocationGeolatitude,dropoffLocationGeolatitude,pickupLocationGeolongitude,dropoffLocationGeolongitude}">
-            <parameter-mapping
-                intentParameter="taxiReservation.pickupLocation.name"
-                urlParameter="pickupLocationName" />
-            <parameter-mapping
-                intentParameter="taxiReservation.dropoffLocation.name"
-                urlParameter="dropoffLocationName" />
-            <parameter-mapping
-                intentParameter="taxiReservation.pickupLocation.address"
-                urlParameter="pickupLocationAddress" />
-            <parameter-mapping
-                intentParameter="taxiReservation.dropoffLocation.address"
-                urlParameter="dropoffLocationAddress" />
+            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress}">
+            <parameter-mapping urlParameter="pickupLocationName" intentParameter="taxiReservation.pickupLocation.name" />
+            <parameter-mapping urlParameter="dropoffLocationName" intentParameter="taxiReservation.dropoffLocation.name" />
+            <parameter-mapping urlParameter="pickupLocationAddress" intentParameter="taxiReservation.pickupLocation.address" />
+            <parameter-mapping urlParameter="dropoffLocationAddress" intentParameter="taxiReservation.dropoffLocation.address" />
             <parameter-mapping
                 urlParameter="category"
                 intentParameter="taxiReservation.category"
                 />
         </fulfillment>
-        <fulfillment urlTemplate="https://fit-actions.taxo.com/ride"
-            fulfillmentMode="actions.fulfillment.DEEPLINK"
-            />
+<!--        <fulfillment urlTemplate="https://fit-actions.taxo.com/ride"-->
+<!--            fulfillmentMode="actions.fulfillment.DEEPLINK"-->
+<!--            />-->
         <parameter name="taxiReservation.category">
             <entity-set-reference entitySetId="categoryEntitySet"/>
         </parameter>
     </action>
 
     <entity-set entitySetId="categoryEntitySet">
-        <!-- Provide an identifier per entity -->
-        <entity identifier="uber" name="Uber"/>
-        <entity identifier="uklon" name="Uklon"/>
+        <entity identifier="standard" name="standart"/>
+        <entity identifier="business" name="prime"/>
+        <entity identifier="pet" name="pet"/>
     </entity-set>
 </actions>
