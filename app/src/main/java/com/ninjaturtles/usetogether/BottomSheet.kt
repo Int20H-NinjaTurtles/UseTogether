@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.android.synthetic.main.fragment_request_ride.*
 
@@ -14,15 +15,22 @@ class BottomSheet : BottomSheetDialogFragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        bottomSheetCallback = if(parentFragment is BottomSheetCallback) parentFragment as BottomSheetCallback
-        else if(context is BottomSheetCallback) context
-        else null
+        bottomSheetCallback =
+            if (parentFragment is BottomSheetCallback) parentFragment as BottomSheetCallback
+            else if (context is BottomSheetCallback) context
+            else null
     }
 
 
     interface BottomSheetCallback {
-        fun onAccept()
-        fun onDecline()
+        fun onAccept(pickupPoint: LatLng?, dropoffPoint: LatLng?)
+        fun onDecline(
+            pickupAdress: String,
+            pickupPoint: LatLng?,
+            dropoffAddress: String,
+            dropoffPoint: LatLng?,
+            category: String,
+        )
     }
 
     override fun onCreateView(
@@ -44,12 +52,21 @@ class BottomSheet : BottomSheetDialogFragment() {
         price.text = arguments?.getInt("price").toString()
         pickupPoint.text = arguments?.getString("from")
         decline.setOnClickListener {
-            bottomSheetCallback?.onDecline()
+            bottomSheetCallback?.onDecline(
+                arguments?.getString("from") ?: "",
+                arguments?.getParcelable("from_point"),
+                arguments?.getString("to") ?: "",
+                arguments?.getParcelable("to_point"),
+                arguments?.getString("category") ?: ""
+            )
             dismissAllowingStateLoss()
         }
 
         accept.setOnClickListener {
-            bottomSheetCallback?.onAccept()
+            bottomSheetCallback?.onAccept(
+                arguments?.getParcelable("from_point"),
+                arguments?.getParcelable("to_point")
+            )
             dismissAllowingStateLoss()
         }
     }
@@ -58,13 +75,14 @@ class BottomSheet : BottomSheetDialogFragment() {
         @JvmStatic
         fun newInstance(
             pickupAdress: String,
+            pickupPoint: LatLng?,
             dropoffAddress: String,
+            dropoffPoint: LatLng?,
             category: String,
             driver: String,
             price: Int,
-            estimate: Float
-
-        ): BottomSheet {
+            estimate: Float,
+            ): BottomSheet {
             val fragment = BottomSheet()
             fragment.arguments = Bundle().apply {
                 putString("from", pickupAdress)
@@ -73,6 +91,8 @@ class BottomSheet : BottomSheetDialogFragment() {
                 putString("driver", driver)
                 putInt("price", price)
                 putFloat("estimate", estimate)
+                putParcelable("from_point", pickupPoint)
+                putParcelable("to_point", dropoffPoint)
             }
             return fragment
         }

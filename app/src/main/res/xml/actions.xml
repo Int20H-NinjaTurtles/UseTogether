@@ -3,11 +3,15 @@
     <action intentName="actions.intent.CREATE_TAXI_RESERVATION">
         <fulfillment
             fulfillmentMode="actions.fulfillment.DEEPLINK"
-            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress}">
+            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress,pickupLocationGeolatitude,dropoffLocationGeolatitude,pickupLocationGeolongitude,dropoffLocationGeolongitude}">
             <parameter-mapping urlParameter="pickupLocationName" intentParameter="taxiReservation.pickupLocation.name" />
             <parameter-mapping urlParameter="dropoffLocationName" intentParameter="taxiReservation.dropoffLocation.name" />
             <parameter-mapping urlParameter="pickupLocationAddress" intentParameter="taxiReservation.pickupLocation.address" />
             <parameter-mapping urlParameter="dropoffLocationAddress" intentParameter="taxiReservation.dropoffLocation.address" />
+            <parameter-mapping urlParameter="pickupLocationGeolatitude" intentParameter="taxiReservation.pickupLocation.geo.latitude" />
+            <parameter-mapping urlParameter="dropoffLocationGeolatitude" intentParameter="taxiReservation.dropoffLocation.geo.latitude" />
+            <parameter-mapping urlParameter="pickupLocationGeolongitude" intentParameter="taxiReservation.pickupLocation.geo.longitude" />
+            <parameter-mapping urlParameter="dropoffLocationGeolongitude" intentParameter="taxiReservation.dropoffLocation.geo.longitude" />
             <parameter-mapping
                 urlParameter="category"
                 intentParameter="taxiReservation.category"
@@ -22,6 +26,7 @@
     </action>
 
     <entity-set entitySetId="categoryEntitySet">
+        <!-- Provide an identifier per entity -->
         <entity identifier="standard" name="standart"/>
         <entity identifier="business" name="prime"/>
         <entity identifier="pet" name="pet"/>

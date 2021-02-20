@@ -44,6 +44,7 @@ class TaxoService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Taxo")
             .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setSmallIcon(android.R.drawable.arrow_up_float)
             .setContentIntent(pendingIntent)
             .build()
@@ -56,7 +57,7 @@ class TaxoService : Service() {
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Foreground Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             val manager = getSystemService(
                 NotificationManager::class.java

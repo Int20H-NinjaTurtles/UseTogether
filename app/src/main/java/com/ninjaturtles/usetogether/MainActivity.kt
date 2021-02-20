@@ -1,14 +1,12 @@
 package com.ninjaturtles.usetogether
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
+import androidx.core.view.isVisible
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -18,11 +16,16 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.BottomSheetCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.BottomSheetCallback,
+    CoroutineScope {
     private val handler = Handler()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var lastLocation: LatLng? = null
 
     private var map: GoogleMap? = null
 
@@ -37,6 +40,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
     }
 
     private fun handleDeepLink(data: Uri?) {
+        val category = data?.getQueryParameter("category") ?: ""
+        val pickupName = data?.getQueryParameter("pickupLocationName")
+        val dropoffName = data?.getQueryParameter("dropoffLocationName")
+        val pickupAddress = data?.getQueryParameter("pickupLocationAddress") ?: ""
+        val dropoffAddress = data?.getQueryParameter("dropoffLocationAddress") ?: ""
+        val pickupLatitude = data?.getQueryParameter("pickupLocationGeolatitude")?.toDouble() ?: 0.0
+        val dropoffLatitude =
+            data?.getQueryParameter("dropoffLocationGeolatitude")?.toDouble() ?: 0.0
+        val pickupLongtitude =
+            data?.getQueryParameter("pickupLocationGeolongitude")?.toDouble() ?: 0.0
+        val dropoffLongtitude =
+            data?.getQueryParameter("dropoffLocationGeolongitude")?.toDouble() ?: 0.0
         startService(
             Intent(
                 TaxoService.FINDING_ACTION,
@@ -57,14 +72,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             )
         }, 2000)
 
-        BottomSheet.newInstance(
-            "A",
-            "B",
-            "Standart",
-            "Alexand Vodila",
-            150,
-            5f
-        ).show(supportFragmentManager, null)
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location == null) return@addOnSuccessListener
+                lastLocation = LatLng(location.latitude, location.longitude)
+                BottomSheet.newInstance(
+                    dropoffAddress,
+                    lastLocation,
+                    pickupAddress,
+                    LatLng(dropoffLatitude, dropoffLongtitude),
+                    category,
+                    "Alexand Vodila",
+                    150,
+                    5f
+                ).show(supportFragmentManager, null)
+            }
     }
 
     private fun Intent.handleIntent() {
@@ -81,18 +103,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location == null) return@addOnSuccessListener
+                lastLocation = LatLng(location.latitude, location.longitude)
                 map?.clear()
                 map?.addMarker(
                     MarkerOptions()
-                        .position(LatLng(location.latitude, location.longitude))
+                        .position(lastLocation!!)
                         .title("Marker in Sydney")
                 )
                 map?.animateCamera(
                     CameraUpdateFactory.newLatLngZoom(
-                        LatLng(
-                            location.latitude,
-                            location.longitude
-                        ),
+                        lastLocation,
                         12f
                     )
                 )
@@ -100,45 +120,67 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
         return
     }
 
-    override fun onAccept() {
-        startService(
-            Intent(
-                TaxoService.ON_WAY_ACTION,
-                null,
-                this,
-                TaxoService::class.java
+    override fun onAccept(pickupPoint: LatLng?, dropoffPoint: LatLng?) {
+        launch {
+            find.isVisible = true
+            val pointsList = withContext(Dispatchers.IO) {
+                UseTogetherApp.instance.geoAPI.getRoute(
+                    Way(
+                        listOf(pickupPoint!!.latitude, pickupPoint.longitude),
+                        listOf(dropoffPoint!!.latitude, dropoffPoint.longitude)
+                    )
+                ).execute()
+            }
+            startService(
+                Intent(
+                    TaxoService.ON_WAY_ACTION,
+                    null,
+                    this@MainActivity,
+                    TaxoService::class.java
+                )
             )
-        )
-        val polyline = PolylineOptions().addAll(
-            listOf(
-                LatLng(12.0, 45.0),
-                LatLng(13.0, 45.0),
-                LatLng(14.0, 45.0),
-                LatLng(15.0, 45.0)
+            val polyline = PolylineOptions().apply {
+                add(pickupPoint)
+                addAll(pointsList?.body()?.map {
+                    LatLng(it.latitude, it.longitude)
+                })
+                add(dropoffPoint)
+            }
+            map?.addPolyline(polyline)
+            startService(
+                Intent(
+                    TaxoService.ON_WAY_ACTION,
+                    null,
+                    this@MainActivity,
+                    TaxoService::class.java
+                )
             )
-        )
-        map?.addPolyline(polyline)
-        startService(
-            Intent(
-                TaxoService.ON_WAY_ACTION,
-                null,
-                this,
-                TaxoService::class.java
-            )
-        )
-        handler.postDelayed({
+            val num = polyline.points.size
+            for (i in 0 until num) {
+                delay(200)
+                map?.clear()
+                map?.addMarker(MarkerOptions().position(lastLocation!!))
+                map?.addPolyline(PolylineOptions().addAll(polyline.points.subList(0, polyline.points.size-i)))
+            }
             startService(
                 Intent(
                     TaxoService.ARRIVED_ACTION,
                     null,
-                    this,
+                    this@MainActivity,
                     TaxoService::class.java
                 )
             )
-        }, 4000)
+        }
     }
 
-    override fun onDecline() {
+    override fun onDecline(
+        pickupAdress: String,
+        pickupPoint: LatLng?,
+        dropoffAddress: String,
+        dropoffPoint: LatLng?,
+        category: String
+    ) {
+        find.isVisible = false
         startService(
             Intent(
                 TaxoService.FINDING_ACTION,
@@ -159,13 +201,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             )
 
             BottomSheet.newInstance(
-                "A",
-                "B",
-                "Prime",
+                pickupAdress,
+                pickupPoint,
+                dropoffAddress,
+                dropoffPoint,
+                category,
                 "Rusik Vodila",
                 200,
                 10f
             ).show(supportFragmentManager, null)
         }, 2000)
     }
+
+    override fun onDestroy() {
+        job.cancel()
+        super.onDestroy()
+    }
+
+
+    private val job = SupervisorJob()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
 }
