@@ -23,7 +23,18 @@ class TaxoService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val data = intent.data
+        val data = intent.action
+        val text = when (data) {
+            FINDING_ACTION -> "Searching for a driver"
+            APPROVE_ACTION -> "You driver is found"
+            ON_WAY_ACTION -> "Driver is on the way"
+            ARRIVED_ACTION -> "Driver has arrived"
+            else -> {
+                stopForeground(true)
+                stopSelf()
+                ""
+            }
+        }
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -31,8 +42,8 @@ class TaxoService : Service() {
             0, notificationIntent, 0
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Foreground Service")
-            .setContentText(data.toString())
+            .setContentTitle("Taxo")
+            .setContentText(text)
             .setSmallIcon(android.R.drawable.arrow_up_float)
             .setContentIntent(pendingIntent)
             .build()
