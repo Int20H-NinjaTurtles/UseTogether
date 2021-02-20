@@ -12,7 +12,7 @@ android {
     buildFeatures {dataBinding true}
 
     defaultConfig {
-        applicationId "com.ninjaturtles.usetogether"
+        applicationId "com.ninjaturtles.taxo"
         minSdkVersion 23
         targetSdkVersion 30
         versionCode 1
