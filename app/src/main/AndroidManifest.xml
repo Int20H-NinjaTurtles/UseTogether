@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.ninjaturtles.usetogether">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <application
         android:name=".UseTogetherApp"
         android:allowBackup="true"
@@ -41,6 +43,16 @@
                     android:scheme="https" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".TaxoService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAMnja8KY2kKhOOVxYe5qJ9nxvvM45pGRQ" />
     </application>
 
 </manifest>

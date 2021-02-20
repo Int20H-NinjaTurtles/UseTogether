@@ -2,26 +2,47 @@ package com.ninjaturtles.usetogether
 
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
-import androidx.navigation.findNavController
-import com.google.android.material.navigation.NavigationView
-import kotlinx.android.synthetic.main.activity_main.*
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+
+    private var map: GoogleMap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
         intent?.handleIntent()
     }
 
-
     private fun handleDeepLink(data: Uri?) {
-        info.text = data.toString()
-//        val startPoint = data?.getQueryParameter(DeepLink.Params.START_POINT).orEmpty()
-//        val endPoint = data?.getQueryParameter(DeepLink.Params.END_POINT).orEmpty()
+        startService(
+            Intent(
+                TaxoService.FINDING_ACTION,
+                data,
+                this,
+                TaxoService::class.java
+            )
+        )
+
+        BottomSheet.newInstance(
+            "A",
+            "B",
+            "Standart",
+            "Alexand Vodila",
+            150,
+            5f
+        ).show(supportFragmentManager, null)
     }
 
     private fun Intent.handleIntent() {
@@ -31,5 +52,16 @@ class MainActivity : AppCompatActivity() {
 
             }
         }
+    }
+
+    override fun onMapReady(googleMap: GoogleMap?) {
+        map = googleMap
+        val sydney = LatLng(-34.0, 151.0)
+        map?.addMarker(
+            MarkerOptions()
+                .position(sydney)
+                .title("Marker in Sydney")
+        )
+        map?.moveCamera(CameraUpdateFactory.newLatLng(sydney))
     }
 }
