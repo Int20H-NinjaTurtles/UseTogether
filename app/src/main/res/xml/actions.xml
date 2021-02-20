@@ -1,16 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version ="1.0" encoding ="utf-8"?><!--  Learn More about how to use App Actions: https://developer.android.com/guide/actions/index.html -->
 <actions>
-    <action intentName="actions.intent.REQUEST_RIDE">
-        <fulfillment urlTemplate="https://fit-actions.firebaseapp.com/ride{?fromPoint}{?toPoint}{?carType}">
+    <action intentName="actions.intent.CREATE_TAXI_RESERVATION">
+        <fulfillment
+            fulfillmentMode="actions.fulfillment.DEEPLINK"
+            urlTemplate="https://fit-actions.taxo.com/ride{?category,pickupLocationName,dropoffLocationName,pickupLocationAddress,dropoffLocationAddress,pickupLocationGeolatitude,dropoffLocationGeolatitude,pickupLocationGeolongitude,dropoffLocationGeolongitude}">
             <parameter-mapping
-                intentParameter="route.from"
-                urlParameter="fromPoint" />
+                intentParameter="taxiReservation.pickupLocation.name"
+                urlParameter="pickupLocationName" />
             <parameter-mapping
-                intentParameter="route.to"
-                urlParameter="toPoint" />
+                intentParameter="taxiReservation.dropoffLocation.name"
+                urlParameter="dropoffLocationName" />
             <parameter-mapping
-                intentParameter="car.type"
-                urlParameter="carType" />
+                intentParameter="taxiReservation.pickupLocation.address"
+                urlParameter="pickupLocationAddress" />
+            <parameter-mapping
+                intentParameter="taxiReservation.dropoffLocation.address"
+                urlParameter="dropoffLocationAddress" />
+            <parameter-mapping
+                urlParameter="category"
+                intentParameter="taxiReservation.category"
+                />
         </fulfillment>
+        <fulfillment urlTemplate="https://fit-actions.taxo.com/ride"
+            fulfillmentMode="actions.fulfillment.DEEPLINK"
+            />
+        <parameter name="taxiReservation.category">
+            <entity-set-reference entitySetId="categoryEntitySet"/>
+        </parameter>
     </action>
+
+    <entity-set entitySetId="categoryEntitySet">
+        <!-- Provide an identifier per entity -->
+        <entity identifier="uber" name="Uber"/>
+        <entity identifier="uklon" name="Uklon"/>
+    </entity-set>
 </actions>
