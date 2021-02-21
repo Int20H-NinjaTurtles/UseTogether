@@ -13,6 +13,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -79,23 +80,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
                     TaxoService::class.java
                 )
             )
-        }, 2000)
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location == null) return@addOnSuccessListener
+                    lastLocation = LatLng(location.latitude, location.longitude)
+                    BottomSheet.newInstance(
+                        dropoffAddress,
+                        lastLocation,
+                        pickupAddress,
+                        LatLng(dropoffLatitude, dropoffLongtitude),
+                        category,
+                        "Alexand Vodila",
+                        150,
+                        5f
+                    ).show(supportFragmentManager, null)
+                }
+        }, 5000)
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location == null) return@addOnSuccessListener
-                lastLocation = LatLng(location.latitude, location.longitude)
-                BottomSheet.newInstance(
-                    dropoffAddress,
-                    lastLocation,
-                    pickupAddress,
-                    LatLng(dropoffLatitude, dropoffLongtitude),
-                    category,
-                    "Alexand Vodila",
-                    150,
-                    5f
-                ).show(supportFragmentManager, null)
-            }
+
     }
 
     private fun Intent.handleIntent() {
@@ -165,10 +167,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             )
             val num = polyline.points.size
             for (i in 0 until num) {
-                delay(200)
+                delay(50)
                 map?.clear()
                 map?.addMarker(MarkerOptions().position(lastLocation!!))
                 map?.addPolyline(PolylineOptions().addAll(polyline.points.subList(0, polyline.points.size-i)))
+                polyline.points.subList(0, polyline.points.size-i).lastOrNull()?.let {
+//                    map?.addMarker(MarkerOptions()
+//                        .position(it)
+//                        .icon(BitmapDescriptorFactory.fromBitmap(R.drawable.ic_car))
+//                    )
+                }
+
             }
             startService(
                 Intent(
