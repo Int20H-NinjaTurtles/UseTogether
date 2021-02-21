@@ -4,5 +4,7 @@
     <string name="password">password</string>
     <string name="signin">sign in</string>
     <string name="signup">sign up</string>
+    <string name="location_permission_denied">Location permission denied. Navigation will not be available.</string>
+    <string name="camera_permission_denied">Camera permission denied. Navigation is not available.</string>
     <string name="app_name">Taxo</string>
 </resources>
