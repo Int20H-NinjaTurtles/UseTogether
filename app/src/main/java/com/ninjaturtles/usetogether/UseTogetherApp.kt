@@ -2,6 +2,7 @@ package com.ninjaturtles.usetogether
 
 import android.app.Application
 import com.google.gson.Gson
+import com.mapbox.vision.VisionManager
 import com.ninjaturtles.usetogether.ar_helper.PlateRecogniserService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -14,6 +15,7 @@ class UseTogetherApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        VisionManager.init(this, BuildConfig.MAPBOX_DOWNLOADS_TOKEN)
         _instance = this
         retrofit = Retrofit.Builder()
             .baseUrl("http://161.35.218.3:8000/")

@@ -193,7 +193,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                             }
                                             runOnUiThread(
                                                 Runnable {
-                                                    //detections_view.setImageBitmap(frameBitmap)
+                                                    detections_view.setImageBitmap(frameBitmap)
                                                 }
                                             )
                                         }
