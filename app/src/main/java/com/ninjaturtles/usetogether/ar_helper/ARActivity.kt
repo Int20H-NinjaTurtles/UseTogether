@@ -193,7 +193,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                             }
                                             runOnUiThread(
                                                 Runnable {
-                                                    detections_view.setImageBitmap(frameBitmap)
+//                                                    detections_view.setImageBitmap(frameBitmap)
                                                 }
                                             )
                                         }
@@ -256,6 +256,8 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     private fun startNavigation() {
+
+
         mapboxNavigation = MapboxNavigation(
             this,
             BuildConfig.MAPBOX_DOWNLOADS_TOKEN,

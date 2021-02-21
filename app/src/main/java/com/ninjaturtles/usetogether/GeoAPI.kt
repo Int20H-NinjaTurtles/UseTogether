@@ -8,6 +8,9 @@ interface GeoAPI {
 
     @POST("build-route/")
     fun getRoute(@Body way: Way): Call<List<Point>>
+
+    @POST("calc-distance-route")
+    fun getDistance(@Body way: Way): Call<Int>
 }
 
 data class Way(
