@@ -225,6 +225,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                         location.longitude,
                         location.latitude
                     )
+                    initDirectionsRoute()
                     val distanceToTaxi = TurfMeasurement.distance(
                         taxiPoint,
                         origin,
@@ -301,9 +302,6 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         } catch (se: SecurityException) {
             VisionLogger.e("ARAssistant", se.toString())
         }
-
-        initDirectionsRoute()
-
         mapboxNavigation.addOffRouteListener(this)
         mapboxNavigation.addProgressChangeListener(this)
     }
