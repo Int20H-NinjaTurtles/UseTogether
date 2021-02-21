@@ -52,13 +52,16 @@ import com.ninjaturtles.usetogether.BuildConfig
 import com.ninjaturtles.usetogether.R
 import com.ninjaturtles.usetogether.UseTogetherApp
 import kotlinx.android.synthetic.main.activity_a_r.*
+import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import kotlin.coroutines.CoroutineContext
 
 
-class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener {
+class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener, CoroutineScope {
     private val locationEngine: LocationEngine by lazy {
         LocationEngineProvider.getBestLocationEngine(this)
     }
@@ -125,8 +128,8 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     override fun onStart() {
         super.onStart()
-        checkLocationPermission()
         checkCameraPermission()
+        checkLocationPermission()
     }
 
     override fun onStop() {
@@ -140,11 +143,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        when(requestCode) {
+        when (requestCode) {
             ACCESS_LOCATION_PERMISSION -> {
                 if (grantResults.isNotEmpty() && grantResults.first() == PackageManager.PERMISSION_GRANTED) {
                     turnOnGps()
-                    startTrackLocation()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        startTrackLocation()
+                    }
                 } else {
                     showLocationPermissionDeniedDialog()
                 }
@@ -167,14 +172,45 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
             override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {
                 super.onFrameDetectionsUpdated(frameDetections)
-                if(needDetectCar) {
-                    val imagePixels = byteArrayOf()
-                    frameDetections.frame.image.copyPixels(imagePixels)
-                    val encodedImage = Base64.encode(imagePixels, Base64.NO_WRAP)
-                    val encodedString = String(encodedImage, Charsets.UTF_8)
-                    plateRecogniserService.recognisePlate(encodedString)
-                        .enqueue(
-                            object : Callback<PlateRecogniserResponse> {
+                if (needDetectCar) {
+                    for (detection in frameDetections.detections) {
+                        if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
+                            /*val bitmap = Bitmap.createBitmap(
+                                frameDetections.frame.image.size.imageWidth,
+                                frameDetections.frame.image.size.imageHeight,
+                                Bitmap.Config.ARGB_8888
+                            )
+                            val buffer =
+                                ByteBuffer.allocateDirect(frameDetections.frame.image.sizeInBytes())
+                            frameDetections.frame.image.copyPixels(buffer)
+                            buffer.rewind()
+                            bitmap.copyPixelsFromBuffer(buffer)
+                            val stream = ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                            val imagePixels = stream.toByteArray()
+                            val encodedImage = Base64.encode(imagePixels, Base64.NO_WRAP)
+                            val encodedString = String(encodedImage, Charsets.UTF_8)*/
+                            /*launch {
+                                val response = withContext(Dispatchers.IO) {
+                                    plateRecogniserService.recognisePlate(encodedString)
+                                        .execute()
+                                }
+                                    response.body()?.results?.forEach {
+                                        if (it.plate == plate) {*/
+                                            val frameBitmap: Bitmap = convertImageToBitmap(
+                                                frameDetections.frame.image
+                                            )
+                                            val canvas = Canvas(frameBitmap)
+                                            drawSingleDetection(canvas, detection)
+                                            detections_view.setImageBitmap(
+                                                frameBitmap
+                                            )
+                                        //}
+                                    //}
+                                //}
+
+                            //.enqueue(
+                            /*object : Callback<PlateRecogniserResponse> {
                                 override fun onResponse(
                                     call: Call<PlateRecogniserResponse>,
                                     response: Response<PlateRecogniserResponse>
@@ -186,14 +222,12 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                                 frameDetections.frame.image
                                             )
                                             val canvas = Canvas(frameBitmap)
-                                            for (detection in frameDetections.detections) {
-                                                if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
-                                                    drawSingleDetection(canvas, detection)
-                                                }
-                                            }
+                                            drawSingleDetection(canvas, detection)
                                             runOnUiThread(
                                                 Runnable {
-                                                    detections_view.setImageBitmap(frameBitmap)
+                                                    detections_view.setImageBitmap(
+                                                        frameBitmap
+                                                    )
                                                 }
                                             )
                                         }
@@ -204,9 +238,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                     call: Call<PlateRecogniserResponse>,
                                     t: Throwable
                                 ) {
+                                    Log.d("taxo", "fail")
                                 }
                             }
-                        )
+                        )*/
+                        }
+                    }
+
                 }
             }
         }
@@ -221,23 +259,21 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         val callback = object : LocationEngineCallback<LocationEngineResult> {
             override fun onSuccess(result: LocationEngineResult?) {
                 result?.lastLocation?.let { location ->
-                    origin = Point.fromLngLat(
+                    this@ARActivity.origin = Point.fromLngLat(
                         location.longitude,
                         location.latitude
                     )
-                    initDirectionsRoute()
                     val distanceToTaxi = TurfMeasurement.distance(
                         taxiPoint,
                         origin,
                         TurfConstants.UNIT_METERS
                     )
                     needDetectCar = distanceToTaxi < CAR_RECOGNITION_AREA_RADIUS
+                    initDirectionsRoute()
                 }
             }
 
-            override fun onFailure(exception: Exception) {
-
-            }
+            override fun onFailure(exception: Exception) {}
         }
         val locationEngineRequest = LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
             .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
@@ -291,7 +327,6 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
             override fun onErrorReceived(throwable: Throwable?) {
                 mapboxNavigation.stopNavigation()
             }
-
         })
         try {
             arLocationEngine.requestLocationUpdates(
@@ -433,12 +468,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     private fun checkCameraPermission() {
-        if(ContextCompat.checkSelfPermission(
+        if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED) {
-                    startVisionManager()
-                    startNavigation()
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startVisionManager()
+            startNavigation()
         } else {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION)
         }
@@ -465,7 +501,6 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
 
-
     private fun turnOnGps() {
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             settingsClient.checkLocationSettings(locationSettingsRequest)
@@ -486,11 +521,13 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
     private fun convertImageToBitmap(originalImage: Image): Bitmap {
 
-        val bitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.transparent_drawable)
+        val bitmap = BitmapFactory.decodeResource(
+            this.getResources(),
+            R.drawable.transparent_drawable
+        )
         val buffer: ByteBuffer = ByteBuffer.allocateDirect(originalImage.sizeInBytes())
         originalImage.copyPixels(buffer)
         buffer.rewind()
-        bitmap.copyPixelsFromBuffer(buffer)
         return bitmap
     }
 
@@ -516,10 +553,14 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
     }
 
     companion object {
-        const val CAR_RECOGNITION_AREA_RADIUS = 30.0
+        const val CAR_RECOGNITION_AREA_RADIUS = 500.0
         private const val ACCESS_LOCATION_PERMISSION = 1
         private const val CAMERA_PERMISSION = 2
         private const val DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L
         private const val DEFAULT_MAX_WAIT_TIME = 5000L
     }
+
+    private val job = SupervisorJob()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
 }

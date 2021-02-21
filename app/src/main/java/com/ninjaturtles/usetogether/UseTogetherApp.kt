@@ -4,8 +4,10 @@ import android.app.Application
 import com.google.gson.Gson
 import com.mapbox.vision.VisionManager
 import com.ninjaturtles.usetogether.ar_helper.PlateRecogniserService
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class UseTogetherApp : Application() {
 
@@ -21,9 +23,15 @@ class UseTogetherApp : Application() {
             .baseUrl("http://161.35.218.3:8000/")
             .addConverterFactory(GsonConverterFactory.create(Gson()))
             .build()
+        val okHttpClient = OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.MINUTES)
+            .connectTimeout(60, TimeUnit.MINUTES)
+            .addInterceptor(HeaderInterceptor())
+            .build()
         plateRecogniserRetrofit = Retrofit.Builder()
             .baseUrl("https://api.platerecognizer.com/")
             .addConverterFactory(GsonConverterFactory.create(Gson()))
+            .client(okHttpClient)
             .build()
         geoAPI = retrofit.create(GeoAPI::class.java)
         plateRecogniserService = plateRecogniserRetrofit.create(PlateRecogniserService::class.java)

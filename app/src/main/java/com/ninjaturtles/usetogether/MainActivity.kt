@@ -38,6 +38,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
         intent?.handleIntent()
+        find.isVisible = true
+        find.setOnClickListener {
+            val intent = Intent(this@MainActivity, ARActivity::class.java)
+            intent.putExtra("originLongitude", 30.49912f)
+            intent.putExtra("originLatitude", 50.4716497f)
+            intent.putExtra("plate", "КА7120ВА")
+            startActivity(intent)
+        }
     }
 
     private fun handleDeepLink(data: Uri?) {
@@ -123,7 +131,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
 
     override fun onAccept(pickupPoint: LatLng?, dropoffPoint: LatLng?) {
         launch {
-            find.isVisible = true
             val pointsList = withContext(Dispatchers.IO) {
                 UseTogetherApp.instance.geoAPI.getRoute(
                     Way(
@@ -131,13 +138,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
                         listOf(dropoffPoint!!.latitude, dropoffPoint.longitude)
                     )
                 ).execute()
-            }
-            find.setOnClickListener {
-                val intent = Intent(this@MainActivity, ARActivity::class.java)
-                intent.putExtra("originLongitude", pickupPoint?.longitude)
-                intent.putExtra("originLatitude", pickupPoint?.latitude)
-                intent.putExtra("plate", "КА7120ВА")
-                startActivity(intent)
             }
             startService(
                 Intent(
