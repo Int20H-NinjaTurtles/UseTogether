@@ -16,6 +16,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.ninjaturtles.usetogether.ar_helper.ARActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
@@ -130,6 +131,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
                         listOf(dropoffPoint!!.latitude, dropoffPoint.longitude)
                     )
                 ).execute()
+            }
+            find.setOnClickListener {
+                val intent = Intent(this@MainActivity, ARActivity::class.java)
+                intent.putExtra("originLongitude", pickupPoint?.longitude)
+                intent.putExtra("originLatitude", pickupPoint?.latitude)
+                intent.putExtra("plate", "КА7120ВА")
+                startActivity(intent)
             }
             startService(
                 Intent(
