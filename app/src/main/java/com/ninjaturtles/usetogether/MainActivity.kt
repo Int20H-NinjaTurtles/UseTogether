@@ -72,23 +72,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
                     TaxoService::class.java
                 )
             )
-        }, 2000)
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location == null) return@addOnSuccessListener
+                    lastLocation = LatLng(location.latitude, location.longitude)
+                    BottomSheet.newInstance(
+                        dropoffAddress,
+                        lastLocation,
+                        pickupAddress,
+                        LatLng(dropoffLatitude, dropoffLongtitude),
+                        category,
+                        "Alexand Vodila",
+                        150,
+                        5f
+                    ).show(supportFragmentManager, null)
+                }
+        }, 5000)
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location == null) return@addOnSuccessListener
-                lastLocation = LatLng(location.latitude, location.longitude)
-                BottomSheet.newInstance(
-                    dropoffAddress,
-                    lastLocation,
-                    pickupAddress,
-                    LatLng(dropoffLatitude, dropoffLongtitude),
-                    category,
-                    "Alexand Vodila",
-                    150,
-                    5f
-                ).show(supportFragmentManager, null)
-            }
+
     }
 
     private fun Intent.handleIntent() {
@@ -166,7 +167,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             )
             val num = polyline.points.size
             for (i in 0 until num) {
-                delay(200)
+                delay(50)
                 map?.clear()
                 map?.addMarker(MarkerOptions().position(lastLocation!!))
                 map?.addPolyline(PolylineOptions().addAll(polyline.points.subList(0, polyline.points.size-i)))

@@ -49,7 +49,7 @@ class BottomSheet : BottomSheetDialogFragment() {
         pickupPoint.text = arguments?.getString("from")
         dropoffPoint.text = arguments?.getString("to")
         driver.text = arguments?.getString("driver")
-        price.text = arguments?.getInt("price").toString()
+        price.text = arguments?.getInt("price").toString() + "$"
         pickupPoint.text = arguments?.getString("from")
         decline.setOnClickListener {
             bottomSheetCallback?.onDecline(
