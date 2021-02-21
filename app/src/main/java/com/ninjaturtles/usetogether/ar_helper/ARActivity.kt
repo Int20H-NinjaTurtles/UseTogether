@@ -48,6 +48,7 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.Image
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.utils.VisionLogger
+import com.mapbox.api.directions.v5.WalkingOptions
 import com.ninjaturtles.usetogether.BuildConfig
 import com.ninjaturtles.usetogether.R
 import com.ninjaturtles.usetogether.UseTogetherApp
@@ -172,9 +173,9 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
 
             override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {
                 super.onFrameDetectionsUpdated(frameDetections)
-                if (needDetectCar) {
-                    for (detection in frameDetections.detections) {
-                        if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
+//                if (needDetectCar) {
+//                    for (detection in frameDetections.detections) {
+//                        if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
                             /*val bitmap = Bitmap.createBitmap(
                                 frameDetections.frame.image.size.imageWidth,
                                 frameDetections.frame.image.size.imageHeight,
@@ -197,14 +198,14 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                 }
                                     response.body()?.results?.forEach {
                                         if (it.plate == plate) {*/
-                                            val frameBitmap: Bitmap = convertImageToBitmap(
-                                                frameDetections.frame.image
-                                            )
-                                            val canvas = Canvas(frameBitmap)
-                                            drawSingleDetection(canvas, detection)
-                                            detections_view.setImageBitmap(
-                                                frameBitmap
-                                            )
+//                                            val frameBitmap: Bitmap = convertImageToBitmap(
+//                                                frameDetections.frame.image
+//                                            )
+//                                            val canvas = Canvas(frameBitmap)
+//                                            drawSingleDetection(canvas, detection)
+//                                            detections_view.setImageBitmap(
+//                                                frameBitmap
+//                                            )
                                         //}
                                     //}
                                 //}
@@ -242,10 +243,10 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
                                 }
                             }
                         )*/
-                        }
-                    }
+//                        }
+//                    }
 
-                }
+//                }
             }
         }
 
@@ -353,6 +354,7 @@ class ARActivity : AppCompatActivity(), ProgressChangeListener, OffRouteListener
         NavigationRoute.builder(this)
             .accessToken(BuildConfig.MAPBOX_DOWNLOADS_TOKEN)
             .origin(origin)
+//            .walkingOptions(NavigationWalkingOptions.Builder().walkwayBias(1.0).alleyBias(1.0).build())
             .destination(taxiPoint)
             .build()
             .getRoute(object : Callback<DirectionsResponse> {

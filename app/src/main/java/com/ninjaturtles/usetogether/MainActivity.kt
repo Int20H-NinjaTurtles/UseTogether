@@ -40,13 +40,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
         mapFragment?.getMapAsync(this)
         intent?.handleIntent()
         find.isVisible = true
-        find.setOnClickListener {
-            val intent = Intent(this@MainActivity, ARActivity::class.java)
-            intent.putExtra("originLongitude", 30.49912f)
-            intent.putExtra("originLatitude", 50.4716497f)
-            intent.putExtra("plate", "КА7120ВА")
-            startActivity(intent)
-        }
+
     }
 
     private fun handleDeepLink(data: Uri?) {
@@ -71,6 +65,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
             )
         )
 
+        find.setOnClickListener {
+            val intent = Intent(this@MainActivity, ARActivity::class.java)
+            intent.putExtra("originLongitude", pickupLongtitude)
+            intent.putExtra("originLatitude", pickupLatitude)
+            intent.putExtra("plate", "КА7120ВА")
+            startActivity(intent)
+        }
+
         handler.postDelayed({
             startService(
                 Intent(
@@ -86,7 +88,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, BottomSheet.Bottom
                     lastLocation = LatLng(location.latitude, location.longitude)
                     BottomSheet.newInstance(
                         dropoffAddress,
-                        lastLocation,
+                        LatLng(pickupLatitude, pickupLongtitude),
                         pickupAddress,
                         LatLng(dropoffLatitude, dropoffLongtitude),
                         category,
